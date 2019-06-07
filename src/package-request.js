@@ -380,7 +380,7 @@ export default class PackageRequest {
     reporter: Reporter,
     filterByPatterns: ?Array<string>,
     flags: ?Object,
-  ): Promise<Array<Dependency>> {
+  ): Promise<Object> {
     const {requests: reqPatterns, workspaceLayout} = await install.fetchRequestFromCwd();
 
     // Filter out workspace patterns if necessary
@@ -444,6 +444,6 @@ export default class PackageRequest {
     const isDepOld = ({current, latest, wanted}) =>
       latest === 'exotic' || (semver.lt(current, wanted) || semver.lt(current, latest));
     const orderByName = (depA, depB) => depA.name.localeCompare(depB.name);
-    return deps.filter(isDepOld).sort(orderByName);
+    return {deps: deps.filter(isDepOld).sort(orderByName), packagePatterns: reqPatterns};
   }
 }

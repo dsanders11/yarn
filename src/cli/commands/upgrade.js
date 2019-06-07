@@ -176,9 +176,7 @@ export async function run(config: Config, reporter: Reporter, flags: Object, arg
     workspaceRootIsCwd: config.cwd === config.lockfileFolder,
   });
   const lockfile = await Lockfile.fromDirectory(config.lockfileFolder, reporter);
-  const deps = await getOutdated(config, reporter, flags, lockfile, args);
-  const install = new Install(flags, config, reporter, lockfile);
-  const {requests: packagePatterns} = await install.fetchRequestFromCwd();
+  const {deps, packagePatterns} = await getOutdated(config, reporter, flags, lockfile, args);
 
   setUserRequestedPackageVersions(deps, args, flags.latest, packagePatterns, reporter);
   cleanLockfile(lockfile, deps, packagePatterns, reporter);
@@ -198,7 +196,7 @@ export async function getOutdated(
   flags: Object,
   lockfile: Lockfile,
   patterns: Array<string>,
-): Promise<Array<Dependency>> {
+): Promise<Object> {
   const install = new Install(flags, config, reporter, lockfile);
   const outdatedFieldName = flags.latest ? 'latest' : 'wanted';
 
@@ -228,13 +226,20 @@ export async function getOutdated(
 
   normalizeScope();
 
-  const deps = (await PackageRequest.getOutdatedPackages(lockfile, install, config, reporter, patterns, flags))
-    .filter(versionFilter)
-    .filter(scopeFilter.bind(this, flags));
+  const {deps: _deps, packagePatterns} = await PackageRequest.getOutdatedPackages(
+    lockfile,
+    install,
+    config,
+    reporter,
+    patterns,
+    flags,
+  );
+
+  const deps = _deps.filter(versionFilter).filter(scopeFilter.bind(this, flags));
   deps.forEach(dep => {
     dep.upgradeTo = buildPatternToUpgradeTo(dep, flags);
     reporter.verbose(reporter.lang('verboseUpgradeBecauseOutdated', dep.name, dep.upgradeTo));
   });
 
-  return deps;
+  return {deps, packagePatterns};
 }

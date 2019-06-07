@@ -39,7 +39,7 @@ export async function run(config: Config, reporter: Reporter, flags: Object, arg
   const outdatedFieldName = flags.latest ? 'latest' : 'wanted';
   const lockfile = await Lockfile.fromDirectory(config.lockfileFolder);
 
-  const deps = await getOutdated(config, reporter, {...flags, includeWorkspaceDeps: true}, lockfile, args);
+  const {deps} = await getOutdated(config, reporter, {...flags, includeWorkspaceDeps: true}, lockfile, args);
 
   if (deps.length === 0) {
     reporter.success(reporter.lang('allDependenciesUpToDate'));
